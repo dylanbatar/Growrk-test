@@ -13,4 +13,8 @@ export class TaskService {
       status: 'pending',
     });
   }
+
+  list(): Promise<Task[]> {
+    return this.repository.listAll();
+  }
 }
