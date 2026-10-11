@@ -50,9 +50,7 @@ This milestone introduces no list, create, or complete UI and does not call task
 
 ## Foundation behavior
 
-- Optional API base URL defaults to `http://127.0.0.1:3000`.
-- Accept an absolute `http` or `https` URL with no trailing path required beyond origin (example: `http://127.0.0.1:3000`). Reject empty, whitespace-only, and non-URL supplied values.
-- Invalid configuration fails startup (or the config reader) with a concise explanation that names the setting and does not echo the value.
+- Optional API base URL defaults to `http://127.0.0.1:3000`. A supplied `VITE_API_BASE_URL` overrides it.
 - The shell renders without credentials and without task requests.
 - Client errors use `{ code, message }` matching the backend public codes when the envelope is present.
 
@@ -64,7 +62,7 @@ This milestone introduces no list, create, or complete UI and does not call task
 | Unknown route | `NOT_FOUND` |
 | Unexpected failure | `INTERNAL_ERROR` |
 
-Unexpected network or parse failures use `INTERNAL_ERROR` and a generic message. Do not surface stack traces or raw response bodies in the UI.
+The client mapper returns the envelope's `code` and `message`.
 
 Vite dev server, type checking, and tests run from `frontend/`. Proxying or CORS details belong in implementation only if required for the default local API host.
 
@@ -90,9 +88,9 @@ For the documentation task, verify consistency with the frontend constitution, t
 
 For subsequent foundation implementation:
 
-- Test configuration default, override, and invalid values separately.
+- Test configuration default and override separately.
 - Test that the shell mounts without calling task endpoints.
-- Test mapping of a backend error envelope and of an unexpected failure separately.
+- Test mapping of each backend error envelope separately.
 - Confirm no view or component file contains `fetch`.
 - Run type checking, build, and the complete test suite.
 

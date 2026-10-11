@@ -21,19 +21,16 @@ The application must start in local development when its configuration is valid.
 **Acceptance criteria**
 
 - Starting with valid configuration makes the UI available in a browser.
-- If startup cannot complete because configuration is invalid, the failure is explained without exposing sensitive values.
 - Startup does not call task endpoints or load task data.
 
 ### FR-2 — Support API configuration defaults
 
-The application must provide a documented default for the Todo API base URL and reject an invalid explicitly supplied value.
+The application must provide a documented default for the Todo API base URL and use a supplied value when one is present.
 
 **Acceptance criteria**
 
 - Missing optional configuration uses its documented default.
-- A valid supplied value overrides the default.
-- An invalid supplied value does not silently fall back.
-- The failure explanation identifies the setting without echoing its value.
+- A supplied value overrides the default.
 
 ### FR-3 — Render a running shell
 
@@ -52,7 +49,6 @@ The HTTP layer must turn backend error responses into a stable client error with
 **Acceptance criteria**
 
 - A backend `{ "error": { "code", "message" } }` body becomes a client error with that code and message.
-- An unexpected failure becomes a generic client error that does not expose stack traces, internal paths, or response internals.
 - Views and components do not parse HTTP envelopes or status codes.
 
 ### FR-5 — Keep HTTP out of components

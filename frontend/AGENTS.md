@@ -6,13 +6,23 @@ A simple todo user interface written in Vue 3 with TypeScript and Vite. It talks
 
 ## Endpoints and important commands
 
-The UI uses these API operations:
+Later task screens will use these API operations. The foundation milestone does not call them:
 
 - `GET /tasks` — list all tasks
 - `POST /tasks` — create a task
 - `PATCH /tasks/:id` — mark a task as completed
 
-Commands will be documented after the frontend foundation spec is implemented. Until then, run backend commands from `backend/`.
+Run frontend commands from `frontend/`. The API base URL defaults to `http://127.0.0.1:3000` (`VITE_API_BASE_URL`).
+
+```sh
+npm ci
+npm run dev
+npm run typecheck
+npm test
+npm run build
+```
+
+Backend commands still run from `backend/`.
 
 ## Project style
 
