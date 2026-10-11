@@ -2,18 +2,19 @@
 
 1. **Simple stack:** Use Vue 3, TypeScript, Vite, Pinia, and Tailwind CSS. Document the need for every added runtime dependency. Do not add another CSS framework or another client state library.
 2. **Spec before code:** Every behavior change must match an agreed specification; update the specification before changing that behavior. Work in `spec/<id>-<name>/` with `spec.md`, `plan.md`, and `task.md`, the same way as the backend.
-3. **Feature architecture:** Group code by feature. Each feature keeps its HTTP functions, Pinia store, and components together.
+3. **Feature architecture:** Group code by feature. Each feature keeps its HTTP functions, Pinia store, views, and components together.
 
 ```text
 src/features/<feature>/
   api/
   stores/
+  views/
   components/
 ```
 
-Shared UI or configuration that more than one feature needs may live under `src/shared/`. Do not create top-level `components/`, `stores/`, or `api/` folders that mix unrelated features.
+`views/` holds screens. `components/` holds pieces those screens compose. Shared UI or configuration that more than one feature needs may live under `src/shared/`. Do not create top-level `views/`, `components/`, `stores/`, or `api/` folders that mix unrelated features.
 
-4. **API folder owns HTTP:** Every request to the Todo API belongs in that feature's `api/` folder. Components must call `api/` functions (directly or through the feature store). Components must not create requests with `fetch`, Axios, or any other HTTP client.
+4. **API folder owns HTTP:** Every request to the Todo API belongs in that feature's `api/` folder. Views and components must call `api/` functions (directly or through the feature store). Views and components must not create requests with `fetch`, Axios, or any other HTTP client.
 
 # example
 
@@ -62,7 +63,7 @@ export async function createTask(title: string): Promise<Task> {
 }
 ```
 
-The Pinia store calls that function and holds the result. The component dispatches a store action and renders state. It does not construct URLs or interpret HTTP envelopes.
+The Pinia store calls that function and holds the result. The view dispatches a store action and renders state, using components for smaller pieces. Views and components do not construct URLs or interpret HTTP envelopes.
 
 Do not reimplement backend business rules (UUID generation, persistence, title trimming as the source of truth). The API remains authoritative. The UI may disable an empty submit for usability; it must still handle `VALIDATION_ERROR` from the API.
 
@@ -117,4 +118,4 @@ test('creates a task', async () => {
 ```
 
 8. **Unrelated failures:** Stop and report failures outside the task. Wait for the user's direction before fixing them.
-9. **API is the data source:** The frontend does not keep a second source of truth on disk. Task data comes from `GET /tasks`, `POST /tasks`, and `PATCH /tasks/:id` through `api/` and Pinia. Changing the API host must not require changes to components.
+9. **API is the data source:** The frontend does not keep a second source of truth on disk. Task data comes from `GET /tasks`, `POST /tasks`, and `PATCH /tasks/:id` through `api/` and Pinia. Changing the API host must not require changes to views or components.

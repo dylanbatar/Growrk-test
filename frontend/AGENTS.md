@@ -18,18 +18,19 @@ Commands will be documented after the frontend foundation spec is implemented. U
 
 Use Vue 3, TypeScript, Vite, Pinia, and Tailwind CSS.
 
-Organize the app by feature, not by technical type at the top level. Each feature owns its `api/`, Pinia store, and components:
+Organize the app by feature, not by technical type at the top level. Each feature owns its `api/`, Pinia store, views, and components:
 
 ```text
 src/features/<feature>/
   api/
   stores/
+  views/
   components/
 ```
 
-HTTP requests live only under a feature `api/` folder. Components and stores call those functions. Components never create `fetch` or Axios calls.
+Views are screens. Components are pieces a view composes. HTTP requests live only under a feature `api/` folder. Views, components, and stores call those functions. Views and components never create `fetch` or Axios calls.
 
-Use a simple flow: components → Pinia store → `api/`. The store holds UI state loaded from the Todo API. The `api/` module is the only place that knows the backend URL and HTTP details.
+Use a simple flow: views → components → Pinia store → `api/`. The store holds UI state loaded from the Todo API. The `api/` module is the only place that knows the backend URL and HTTP details.
 
 ## Rules
 
