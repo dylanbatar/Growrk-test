@@ -6,30 +6,41 @@ A simple todo user interface written in Vue 3 with TypeScript and Vite. It talks
 
 ## Endpoints and important commands
 
-The UI uses these API operations:
+Later task screens will use these API operations. The foundation milestone does not call them:
 
 - `GET /tasks` — list all tasks
 - `POST /tasks` — create a task
 - `PATCH /tasks/:id` — mark a task as completed
 
-Commands will be documented after the frontend foundation spec is implemented. Until then, run backend commands from `backend/`.
+Run frontend commands from `frontend/`. The API base URL defaults to `http://127.0.0.1:3000` (`VITE_API_BASE_URL`).
+
+```sh
+npm ci
+npm run dev
+npm run typecheck
+npm test
+npm run build
+```
+
+Backend commands still run from `backend/`.
 
 ## Project style
 
 Use Vue 3, TypeScript, Vite, Pinia, and Tailwind CSS.
 
-Organize the app by feature, not by technical type at the top level. Each feature owns its `api/`, Pinia store, and components:
+Organize the app by feature, not by technical type at the top level. Each feature owns its `api/`, Pinia store, views, and components:
 
 ```text
 src/features/<feature>/
   api/
   stores/
+  views/
   components/
 ```
 
-HTTP requests live only under a feature `api/` folder. Components and stores call those functions. Components never create `fetch` or Axios calls.
+Views are screens. Components are pieces a view composes. HTTP requests live only under a feature `api/` folder. Views, components, and stores call those functions. Views and components never create `fetch` or Axios calls.
 
-Use a simple flow: components → Pinia store → `api/`. The store holds UI state loaded from the Todo API. The `api/` module is the only place that knows the backend URL and HTTP details.
+Use a simple flow: views → components → Pinia store → `api/`. The store holds UI state loaded from the Todo API. The `api/` module is the only place that knows the backend URL and HTTP details.
 
 ## Rules
 
