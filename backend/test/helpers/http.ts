@@ -22,3 +22,11 @@ export async function serve(t: TestContext, app: RequestListener) {
     signal: AbortSignal.timeout(5000),
   });
 }
+
+export function json(method: string, body: unknown): RequestInit {
+  return {
+    method,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  };
+}
