@@ -14,6 +14,10 @@ export class JsonTaskRepository implements TaskRepository {
     return task;
   }
 
+  listAll(): Promise<Task[]> {
+    return this.read();
+  }
+
   private async read(): Promise<Task[]> {
     try {
       const contents = await readFile(this.filePath, 'utf8');

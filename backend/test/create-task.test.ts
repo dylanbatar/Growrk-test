@@ -89,15 +89,67 @@ test('rejects a non-string title without writing storage', async (t) => {
   await assert.rejects(() => access(filePath), { code: 'ENOENT' });
 });
 
+test('lists no tasks when the store is empty', async (t) => {
+  const { request, filePath } = await isolatedApp(t);
+
+  const response = await request('/tasks');
+  const tasks = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type') ?? '', /^application\/json/);
+  assert.deepEqual(tasks, []);
+  await assert.rejects(() => access(filePath), { code: 'ENOENT' });
+});
+
+test('lists created tasks in insertion order', async (t) => {
+  const { request } = await isolatedApp(t);
+
+  const first = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+  const second = await (await request('/tasks', json('POST', { title: 'Read a chapter' }))).json() as Task;
+  const response = await request('/tasks');
+  const tasks = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(tasks, [first, second]);
+});
+
 test('persistence failure returns INTERNAL_ERROR without leaking details', async (t) => {
   const repository: TaskRepository = {
     async add() {
       throw new Error('EACCES /private/internal/tasks.json\n    at JsonTaskRepository.add');
     },
+    async listAll() {
+      return [];
+    },
   };
   const request = await serve(t, createApp({ taskRepository: repository }));
 
   const failed = await request('/tasks', json('POST', { title: 'Buy groceries' }));
+  const body = await failed.json();
+  const health = await request('/health');
+
+  assert.equal(failed.status, 500);
+  assert.deepEqual(body, {
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
+  });
+  assert.equal(JSON.stringify(body).includes('tasks.json'), false);
+  assert.equal(JSON.stringify(body).includes('JsonTaskRepository'), false);
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: 'ok' });
+});
+
+test('list persistence failure returns INTERNAL_ERROR without leaking details', async (t) => {
+  const repository: TaskRepository = {
+    async add(task) {
+      return task;
+    },
+    async listAll() {
+      throw new Error('EACCES /private/internal/tasks.json\n    at JsonTaskRepository.listAll');
+    },
+  };
+  const request = await serve(t, createApp({ taskRepository: repository }));
+
+  const failed = await request('/tasks');
   const body = await failed.json();
   const health = await request('/health');
 
@@ -120,9 +172,21 @@ test('creates a task without authentication headers', async (t) => {
   assert.equal(response.headers.get('www-authenticate'), null);
 });
 
+test('lists tasks without authentication headers', async (t) => {
+  const { request } = await isolatedApp(t);
+
+  const response = await request('/tasks');
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('www-authenticate'), null);
+});
+
 test('health does not access task storage', async (t) => {
   const repository: TaskRepository = {
     async add() {
+      throw new Error('storage must not be used');
+    },
+    async listAll() {
       throw new Error('storage must not be used');
     },
   };

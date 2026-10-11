@@ -17,3 +17,14 @@ export function createTask(service: TaskService): RequestHandler<
     }
   };
 }
+
+export function listTasks(service: TaskService): RequestHandler {
+  return async (_request, response, next) => {
+    try {
+      const tasks = await service.list();
+      response.status(200).json(tasks);
+    } catch (error) {
+      next(error);
+    }
+  };
+}
