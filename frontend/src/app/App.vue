@@ -1,6 +1,7 @@
+<script setup lang="ts">
+import TasksView from '../features/tasks/views/TasksView.vue';
+</script>
+
 <template>
-  <main>
-    <h1>Todo</h1>
-    <p>The application is running.</p>
-  </main>
+  <TasksView />
 </template>
