@@ -14,6 +14,17 @@ const validationError = {
   error: { code: 'VALIDATION_ERROR', message: 'Request input is invalid.' },
 };
 
+function unusedLookups(): Pick<TaskRepository, 'findById' | 'update'> {
+  return {
+    async findById() {
+      return undefined;
+    },
+    async update(task) {
+      return task;
+    },
+  };
+}
+
 async function isolatedApp(t: TestContext) {
   const directory = await mkdtemp(join(tmpdir(), 'tasks-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
@@ -121,6 +132,7 @@ test('persistence failure returns INTERNAL_ERROR without leaking details', async
     async listAll() {
       return [];
     },
+    ...unusedLookups(),
   };
   const request = await serve(t, createApp({ taskRepository: repository }));
 
@@ -146,6 +158,7 @@ test('list persistence failure returns INTERNAL_ERROR without leaking details', 
     async listAll() {
       throw new Error('EACCES /private/internal/tasks.json\n    at JsonTaskRepository.listAll');
     },
+    ...unusedLookups(),
   };
   const request = await serve(t, createApp({ taskRepository: repository }));
 
@@ -189,6 +202,7 @@ test('health does not access task storage', async (t) => {
     async listAll() {
       throw new Error('storage must not be used');
     },
+    ...unusedLookups(),
   };
   const request = await serve(t, createApp({ taskRepository: repository }));
 
@@ -212,6 +226,108 @@ test('malformed JSON on POST /tasks returns INVALID_JSON', async (t) => {
   assert.deepEqual(body, {
     error: { code: 'INVALID_JSON', message: 'Request body must contain valid JSON.' },
   });
+});
+
+test('completes a task', async (t) => {
+  const { request, filePath } = await isolatedApp(t);
+  const created = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+
+  const response = await request(`/tasks/${created.id}`, json('PATCH', { status: 'completed' }));
+  const task = await response.json() as Task;
+  const stored = JSON.parse(await readFile(filePath, 'utf8'));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(task, { ...created, status: 'completed' });
+  assert.deepEqual(stored, [task]);
+});
+
+test('completing a task twice is idempotent', async (t) => {
+  const { request } = await isolatedApp(t);
+  const created = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+  await request(`/tasks/${created.id}`, json('PATCH', { status: 'completed' }));
+
+  const response = await request(`/tasks/${created.id}`, json('PATCH', { status: 'completed' }));
+  const task = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(task, { ...created, status: 'completed' });
+});
+
+test('completing an unknown task returns TASK_NOT_FOUND', async (t) => {
+  const { request } = await isolatedApp(t);
+
+  const response = await request('/tasks/718ed075-93ed-46ab-a32b-1f32049780e0', json('PATCH', {
+    status: 'completed',
+  }));
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(body, {
+    error: { code: 'TASK_NOT_FOUND', message: 'Task not found.' },
+  });
+});
+
+test('rejects a missing complete status', async (t) => {
+  const { request } = await isolatedApp(t);
+  const created = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+
+  const response = await request(`/tasks/${created.id}`, json('PATCH', {}));
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), validationError);
+});
+
+test('rejects a status other than completed', async (t) => {
+  const { request } = await isolatedApp(t);
+  const created = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+
+  const response = await request(`/tasks/${created.id}`, json('PATCH', { status: 'pending' }));
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), validationError);
+});
+
+test('complete persistence failure returns INTERNAL_ERROR without leaking details', async (t) => {
+  const repository: TaskRepository = {
+    async add(task) {
+      return task;
+    },
+    async listAll() {
+      return [];
+    },
+    async findById() {
+      return { id: '718ed075-93ed-46ab-a32b-1f32049780e0', title: 'Buy groceries', status: 'pending' };
+    },
+    async update() {
+      throw new Error('EACCES /private/internal/tasks.json\n    at JsonTaskRepository.update');
+    },
+  };
+  const request = await serve(t, createApp({ taskRepository: repository }));
+
+  const failed = await request('/tasks/718ed075-93ed-46ab-a32b-1f32049780e0', json('PATCH', {
+    status: 'completed',
+  }));
+  const body = await failed.json();
+  const health = await request('/health');
+
+  assert.equal(failed.status, 500);
+  assert.deepEqual(body, {
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
+  });
+  assert.equal(JSON.stringify(body).includes('tasks.json'), false);
+  assert.equal(JSON.stringify(body).includes('JsonTaskRepository'), false);
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: 'ok' });
+});
+
+test('completes a task without authentication headers', async (t) => {
+  const { request } = await isolatedApp(t);
+  const created = await (await request('/tasks', json('POST', { title: 'Buy groceries' }))).json() as Task;
+
+  const response = await request(`/tasks/${created.id}`, json('PATCH', { status: 'completed' }));
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('www-authenticate'), null);
 });
 
 test('unknown route returns NOT_FOUND', async (t) => {
