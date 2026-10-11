@@ -1,6 +1,7 @@
 const errors = {
   INVALID_JSON: { status: 400, message: 'Request body must contain valid JSON.' },
   VALIDATION_ERROR: { status: 400, message: 'Request input is invalid.' },
+  TASK_NOT_FOUND: { status: 404, message: 'Task not found.' },
   NOT_FOUND: { status: 404, message: 'Route not found.' },
   INTERNAL_ERROR: { status: 500, message: 'An unexpected error occurred.' },
 } as const;

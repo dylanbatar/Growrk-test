@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { Task } from '../models/task.js';
+import type { CompleteTaskInput } from '../schemas/complete-task.js';
 import type { CreateTaskInput } from '../schemas/create-task.js';
 import type { TaskService } from '../services/task.service.js';
 
@@ -23,6 +24,21 @@ export function listTasks(service: TaskService): RequestHandler {
     try {
       const tasks = await service.list();
       response.status(200).json(tasks);
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
+export function completeTask(service: TaskService): RequestHandler<
+  { id: string },
+  Task,
+  CompleteTaskInput
+> {
+  return async (request, response, next) => {
+    try {
+      const task = await service.complete(request.params.id);
+      response.status(200).json(task);
     } catch (error) {
       next(error);
     }
