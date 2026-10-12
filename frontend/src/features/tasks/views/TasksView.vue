@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import CompleteTaskSheet from '../components/CompleteTaskSheet.vue';
 import CreateTaskSheet from '../components/CreateTaskSheet.vue';
 import TaskList from '../components/TaskList.vue';
+import { useTasksStore } from '../stores/tasks';
 import type { Task } from '../task';
 
-const tasks = ref<Task[]>([]);
+const store = useTasksStore();
+const { tasks, creating, createError } = storeToRefs(store);
 
 const createOpen = ref(false);
 const selectedId = ref<string | null>(null);
@@ -18,22 +21,23 @@ function openCreate() {
 
 function closeCreate() {
   createOpen.value = false;
+  createError.value = null;
 }
 
-function addTask(title: string) {
-  tasks.value = [
-    ...tasks.value,
-    {
-      id: `local-${crypto.randomUUID()}`,
-      title,
-      status: 'pending',
-    },
-  ];
-  createOpen.value = false;
+async function addTask(title: string) {
+  const count = tasks.value.length;
+  await store.create(title);
+  if (tasks.value.length === count + 1) {
+    createOpen.value = false;
+  }
+}
+
+function clearCreateError() {
+  createError.value = null;
 }
 
 function openComplete(task: Task) {
-  createOpen.value = false;
+  closeCreate();
   selectedId.value = task.id;
 }
 
@@ -47,9 +51,7 @@ function completeSelected() {
     return;
   }
 
-  tasks.value = tasks.value.map((task) =>
-    task.id === id ? { ...task, status: 'completed' as const } : task,
-  );
+  store.completeLocally(id);
   selectedId.value = null;
 }
 </script>
@@ -73,7 +75,15 @@ function completeSelected() {
         <span class="text-4xl leading-none font-light" aria-hidden="true">+</span>
       </button>
 
-      <CreateTaskSheet :open="createOpen" @submit="addTask" @close="closeCreate" />
+      <CreateTaskSheet
+        v-if="createOpen"
+        :open="true"
+        :error="createError?.message ?? null"
+        :submitting="creating"
+        @submit="addTask"
+        @close="closeCreate"
+        @input="clearCreateError"
+      />
       <CompleteTaskSheet
         v-if="selected?.status === 'pending'"
         :title="selected.title"
