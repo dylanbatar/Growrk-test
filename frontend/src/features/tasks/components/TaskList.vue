@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import type { Task } from '../task';
 
-defineProps<{
-  tasks: Task[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    tasks: Task[];
+    loading?: boolean;
+    loadFailed?: boolean;
+  }>(),
+  {
+    loading: false,
+    loadFailed: false,
+  },
+);
 
 const emit = defineEmits<{
   select: [task: Task];
@@ -18,7 +26,9 @@ function selectPending(task: Task) {
 
 <template>
   <div class="min-h-0 flex-1 overflow-y-auto">
-    <p v-if="tasks.length === 0" class="px-5 text-sm text-slate-500">No tasks yet.</p>
+    <p v-if="props.tasks.length === 0 && !props.loading && !props.loadFailed" class="px-5 text-sm text-slate-500">
+      No tasks yet.
+    </p>
     <ul v-else class="flex flex-col gap-4 px-5 pb-28" role="list">
       <li
         v-for="task in tasks"

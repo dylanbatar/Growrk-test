@@ -7,6 +7,44 @@ const unexpectedFailure: ClientError = {
   message: 'The request could not be completed.',
 };
 
+export async function listTasks(): Promise<Task[]> {
+  let response: Response;
+
+  try {
+    response = await fetch(new URL('/tasks', readApiBaseUrl()), {
+      method: 'GET',
+    });
+  } catch {
+    throw { ...unexpectedFailure };
+  }
+
+  if (!response.ok) {
+    throw await readFailure(response);
+  }
+
+  return response.json() as Promise<Task[]>;
+}
+
+export async function completeTask(id: string): Promise<Task> {
+  let response: Response;
+
+  try {
+    response = await fetch(new URL(`/tasks/${encodeURIComponent(id)}`, readApiBaseUrl()), {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'completed' }),
+    });
+  } catch {
+    throw { ...unexpectedFailure };
+  }
+
+  if (!response.ok) {
+    throw await readFailure(response);
+  }
+
+  return response.json() as Promise<Task>;
+}
+
 export async function createTask(title: string): Promise<Task> {
   let response: Response;
 

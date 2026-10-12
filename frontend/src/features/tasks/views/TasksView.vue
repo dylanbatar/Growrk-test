@@ -8,7 +8,9 @@ import { useTasksStore } from '../stores/tasks';
 import type { Task } from '../task';
 
 const store = useTasksStore();
-const { tasks, creating, createError } = storeToRefs(store);
+const { tasks, creating, createError, loading, loadError, completing, completeError } = storeToRefs(store);
+
+void store.load();
 
 const createOpen = ref(false);
 const selectedId = ref<string | null>(null);
@@ -43,16 +45,20 @@ function openComplete(task: Task) {
 
 function closeComplete() {
   selectedId.value = null;
+  completeError.value = null;
 }
 
-function completeSelected() {
+async function completeSelected() {
   const id = selectedId.value;
   if (!id) {
     return;
   }
 
-  store.completeLocally(id);
-  selectedId.value = null;
+  await store.complete(id);
+  const updated = tasks.value.find((task) => task.id === id);
+  if (updated?.status === 'completed' && completeError.value === null) {
+    selectedId.value = null;
+  }
 }
 </script>
 
@@ -63,7 +69,15 @@ function completeSelected() {
         Hello
       </h1>
 
-      <TaskList :tasks="tasks" @select="openComplete" />
+      <p v-if="loadError" role="alert" class="shrink-0 px-5 pb-4 text-sm text-red-700">
+        {{ loadError.message }}
+      </p>
+      <TaskList
+        :tasks="tasks"
+        :loading="loading"
+        :load-failed="loadError !== null"
+        @select="openComplete"
+      />
 
       <button
         v-if="!createOpen && !selected"
@@ -87,6 +101,8 @@ function completeSelected() {
       <CompleteTaskSheet
         v-if="selected?.status === 'pending'"
         :title="selected.title"
+        :error="completeError?.message ?? null"
+        :submitting="completing"
         @confirm="completeSelected"
         @close="closeComplete"
       />
