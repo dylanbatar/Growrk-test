@@ -76,6 +76,8 @@ Handled errors use `{ "error": { "code", "message" } }`.
 ### Project
 
 The application was built entirely with spec-driven development (SDD). The flow is drawn in [`sdd-workflow.excalidraw`](sdd-workflow.excalidraw):
+<img width="626" height="993" alt="image" src="https://github.com/user-attachments/assets/47bda5a9-47d6-4978-954b-545547c4a758" />
+
 
 1. **Constitution** — standing rules in `backend/docs/constitution.md` and `frontend/docs/constitution.md`.
 2. **Specification** (`spec.md`) — what the behavior is and why.
