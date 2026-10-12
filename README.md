@@ -119,3 +119,11 @@ src/shared/     config and error mapping used across features
 ```
 
 Views and components do not call `fetch`. HTTP stays in `src/features/tasks/api/`. Shared error mapping turns the API envelope into `{ code, message }` so screens never parse status codes. Tailwind utility classes are the styling layer.
+
+## Improvements
+
+- **Storage.** A database can replace the JSON file. The repository interface already keeps that choice out of the service, so an in-memory implementation fits the same boundary and is enough for tests or a short-lived process.
+- **Setup.** Docker can start the API and the UI together, with one command and the same ports every time.
+- **Users.** The app can grow to multiple users, each with their own tasks. Today every task lives in one shared collection.
+- **Tests.** Backend HTTP tests can move to Supertest. The UI can add end-to-end coverage with Playwright or Cypress on top of the current Vitest unit tests.
+- **List size.** `GET /tasks` returns every task, and a title only has to be a non-empty string. Pagination on the list, plus a maximum title length, keeps the collection usable as it grows.
