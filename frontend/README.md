@@ -2,7 +2,7 @@
 
 Requires Node.js 24 or newer and npm.
 
-The UI is a Vue application. This milestone starts a local shell, validates the API base URL, and maps backend errors. It does not list, create, or complete tasks, and it does not ask for credentials.
+The UI is a Vue application. Opening the task screen calls `GET /tasks`. Creating a task calls `POST /tasks`. The complete sheet calls `PATCH /tasks/:id`. The app does not ask for credentials.
 
 ## Dependencies
 
@@ -81,20 +81,16 @@ Later task flow:
 
 `views → components → Pinia store → features/tasks/api/ → Todo API`
 
-## Future task screens
+## List and complete
 
-The backend already supports:
+Opening the screen sends `GET /tasks` and shows the returned array in that order. HTTP `200` with `[]` shows `No tasks yet.` A failed load shows the error message and does not show that empty text.
 
-| Operation | HTTP |
-|---|---|
-| List tasks | `GET /tasks` |
-| Create a task | `POST /tasks` with `{ "title" }` |
-| Complete a task | `PATCH /tasks/:id` with `{ "status": "completed" }` |
+The complete sheet sends `PATCH /tasks/:id` with `{ "status": "completed" }`. HTTP `200` replaces that task with the returned task and closes the sheet. `TASK_NOT_FOUND`, `VALIDATION_ERROR`, and `INTERNAL_ERROR` leave the sheet open and leave the task pending. The visible text is the error message only.
 
-A task is `{ id, title, status }` with `status` of `pending` or `completed`. Those screens are not in this milestone. Visual design is also later work.
+Creating a task still sends `POST /tasks` with `{ "title" }` and appends the `201` task. It does not send another `GET /tasks`.
 
 Editing titles, deleting tasks, reverting a task to pending, and fetching a single task are outside the project scope. The app does not provide accounts, tokens, sessions, or permission checks.
 
 ## Source documents
 
-Behavior is defined in [the specification](spec/001-architecture/spec.md), [the plan](spec/001-architecture/plan.md), and [the task checklist](spec/001-architecture/task.md). Project rules are in [the constitution](docs/constitution.md).
+Foundation behavior is defined in [the specification](spec/001-architecture/spec.md). Listing and completing are defined in [spec/003-list-and-complete/spec.md](spec/003-list-and-complete/spec.md). Project rules are in [the constitution](docs/constitution.md).

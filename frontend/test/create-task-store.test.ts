@@ -70,18 +70,3 @@ test('ignores a second create while the first request is in flight', async () =>
   assert.equal(calls, 1);
 });
 
-test('marks a task completed on screen without calling the API', async () => {
-  let calls = 0;
-  vi.stubGlobal('fetch', async () => {
-    calls += 1;
-    return Response.json(created, { status: 201 });
-  });
-  const store = useTasksStore();
-  await store.create('Buy groceries');
-  calls = 0;
-
-  store.completeLocally(created.id);
-
-  assert.deepEqual(store.tasks, [{ ...created, status: 'completed' }]);
-  assert.equal(calls, 0);
-});
