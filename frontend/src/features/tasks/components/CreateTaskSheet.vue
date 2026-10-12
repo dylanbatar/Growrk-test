@@ -1,26 +1,38 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-defineProps<{
-  open: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    error?: string | null;
+    submitting?: boolean;
+  }>(),
+  {
+    error: null,
+    submitting: false,
+  },
+);
 
 const emit = defineEmits<{
   submit: [title: string];
   close: [];
+  input: [];
 }>();
 
 const title = ref('');
-const canSubmit = computed(() => title.value.trim().length > 0);
+const canSubmit = computed(() => title.value.trim().length > 0 && !props.submitting);
 
 function submit() {
   const nextTitle = title.value.trim();
-  if (!nextTitle) {
+  if (!nextTitle || props.submitting) {
     return;
   }
 
   emit('submit', nextTitle);
-  title.value = '';
+}
+
+function onTitleInput() {
+  emit('input');
 }
 </script>
 
@@ -50,8 +62,10 @@ function submit() {
           type="text"
           placeholder="Task name"
           class="h-14 w-full rounded-2xl border border-slate-200 px-4 text-base text-neutral-950 outline-none placeholder:text-slate-400"
+          @input="onTitleInput"
         />
       </label>
+      <p v-if="error" role="alert" class="mt-3 text-sm text-red-700">{{ error }}</p>
       <button
         data-action="create"
         type="button"

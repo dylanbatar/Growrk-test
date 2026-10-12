@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { type Router } from 'express';
 import { errorHandler } from './middlewares/error-handler.js';
 import { healthRoutes } from './routes/health.routes.js';
@@ -17,6 +18,7 @@ export type AppOptions = {
 export function createApp(options: AppOptions = {}) {
   const repository = options.taskRepository ?? new JsonTaskRepository(defaultTaskFilePath);
   const app = express();
+  app.use(cors());
   app.use(express.json());
   app.use(healthRoutes);
   app.use(taskRoutes(new TaskService(repository)));

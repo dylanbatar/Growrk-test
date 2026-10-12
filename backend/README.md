@@ -6,6 +6,7 @@ Requires Node.js 24 or newer and npm.
 
 - Express: HTTP routing and middleware.
 - Zod: configuration and request validation.
+- cors: lets the browser call the API from another local port.
 
 TypeScript, tsx, and type declarations are development dependencies. Tests use Node's built-in test runner and assertions.
 
